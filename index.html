@@ -1,27 +1,24 @@
-<!DOCTYPE html><html lang="es"><head>
+<!DOCTYPE html>
+<html lang="es">
+<head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Auto-Extractor de Cronologías (Sofascore • multi-proxy + diagnóstico)</title>
+  <title>Auto-Extractor de Cronologías — API-Football (sin proxys)</title>
   <style>
-    :root{--bg:#0b1222;--panel:#0f172a;--edge:#18212f;--text:#e2e8f0;--muted:#93a4b3;--accent:#22d3ee;--ok:#34d399;--warn:#f59e0b;--bad:#fb7185}
+    :root{--bg:#0b1222;--panel:#0f172a;--edge:#18212f;--text:#e2e8f0;--muted:#93a4b3;--accent:#22d3ee}
     *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial}
-    header{padding:18px;border-bottom:1px solid var(--edge);background:#09101e;position:sticky;top:0;z-index:10}
-    h1{margin:0;font-size:18px;letter-spacing:.2px}
-    main{max-width:1200px;margin:0 auto;padding:18px;display:grid;gap:16px}
-    .panel{background:var(--panel);border:1px solid var(--edge);border-radius:16px;padding:14px}
+    header{padding:16px 18px;border-bottom:1px solid var(--edge);background:#09101e;position:sticky;top:0;z-index:10}
+    h1{margin:0;font-size:18px}
+    main{max-width:1100px;margin:0 auto;padding:16px;display:grid;gap:14px}
+    .panel{background:#0f172a;border:1px solid var(--edge);border-radius:14px;padding:12px}
     .row{display:flex;gap:8px;flex-wrap:wrap}
-    input,select,textarea,button{background:#09101e;color:var(--text);border:1px solid var(--edge);border-radius:12px;padding:10px 12px}
-    input:focus,select:focus,textarea:focus{outline:1px solid var(--accent)}
+    input,button{background:#09101e;color:var(--text);border:1px solid var(--edge);border-radius:12px;padding:10px 12px}
+    input:focus{outline:1px solid var(--accent)}
     button{cursor:pointer}
-    .btn{background:#0b1527}
     .btn.primary{background:linear-gradient(90deg,#0ea5b6,#22d3ee);border:none;color:#001319}
-    .btn.good{background:linear-gradient(90deg,#059669,#34d399);border:none;color:#00170e}
-    .btn.warn{background:linear-gradient(90deg,#b45309,#f59e0b);border:none;color:#1b0d00}
-    .muted{color:var(--muted)}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+    .muted{color:var(--muted)} .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
     pre{white-space:pre-wrap;word-wrap:break-word;margin:0}
-    .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:#0b1222;border:1px dashed #334155;border-radius:999px}
-    .progress{display:none;gap:8px;align-items:center}
+    #progress{display:none;gap:8px;align-items:center}
     .bar{flex:1;min-width:240px;height:10px;background:#0b1222;border:1px solid #1f2937;border-radius:999px;overflow:hidden}
     .fill{height:100%;width:0%;background:linear-gradient(90deg,#0ea5b6,#22d3ee)}
     .ptext{min-width:120px;text-align:right;font-size:12px;color:var(--muted)}
@@ -30,375 +27,289 @@
 <body>
   <header>
     <div class="row" style="align-items:center;justify-content:space-between">
-      <h1>Auto-Extractor de Cronologías (Sofascore vía multi-proxy)</h1>
-      <div class="muted mono">Stats, tiros, posesión, xG • diagnóstico en vivo</div>
+      <h1>Auto-Extractor de Cronologías — API-Football</h1>
+      <div class="muted mono">sin proxys • sin CORS • con tiros, posesión y eventos</div>
     </div>
   </header>
 
   <main>
-    <!-- PROXY -->
+    <!-- API KEY -->
     <section class="panel">
-      <h2>1) Proxy CORS</h2>
+      <h2 style="margin:0 0 8px 0">1) API Key</h2>
       <div class="row">
-        <label class="chip">Proxy base: <input id="proxyBase" placeholder="(déjalo vacío para usar proxys públicos)" style="min-width:360px"></label>
-        <button class="btn" onclick="saveProxy()">Guardar</button>
-        <span id="proxyStatus" class="muted"></span>
+        <input id="apiKey" placeholder="Tu API Key de RapidAPI (API-Football)" style="min-width:360px">
+        <button onclick="saveKey()">Guardar</button>
+        <span id="keyStatus" class="muted"></span>
       </div>
       <div class="muted" style="margin-top:6px">
-        Si lo dejas vacío, se usará <code>r.jina.ai</code> primero y otros proxys públicos como respaldo (100% repo).
+        Consíguela gratis en RapidAPI → API-Football. No hay proxys ni CORS.
       </div>
     </section>
 
     <!-- 6 ESPACIOS -->
     <section class="panel">
-      <h2>2) Parámetros</h2>
+      <h2 style="margin:0 0 8px 0">2) Parámetros</h2>
       <div class="row">
-        <input id="equipoA" placeholder="Equipo A">
-        <input id="equipoB" placeholder="Equipo B">
-        <input id="nA" type="number" min="0" placeholder="# partidos A">
-        <input id="nB" type="number" min="0" placeholder="# partidos B">
-        <input id="nH2H" type="number" min="0" placeholder="# H2H">
+        <input id="equipoA" placeholder="Equipo A (ej.: Barcelona)">
+        <input id="equipoB" placeholder="Equipo B (ej.: PSG)">
+        <input id="nA" type="number" min="0" placeholder="# partidos A (ej.: 3)">
+        <input id="nB" type="number" min="0" placeholder="# partidos B (ej.: 3)">
+        <input id="nH2H" type="number" min="0" placeholder="# H2H (ej.: 3)">
         <input id="competicionGlobal" placeholder="Competición (opcional)">
       </div>
-      <div id="progress" class="progress" style="margin-top:10px">
+
+      <div id="progress" class="row" style="margin-top:10px">
         <div class="bar"><div class="fill" id="pfill"></div></div>
         <div class="ptext" id="ptext">0%</div>
       </div>
+
       <div class="row" style="margin-top:8px">
         <button class="btn primary" onclick="runAll()">Extraer automáticamente</button>
-        <button class="btn" onclick="clearAll()">Limpiar</button>
+        <button onclick="clearAll()">Limpiar</button>
         <span id="status" class="muted mono"></span>
       </div>
     </section>
 
     <!-- SALIDA -->
     <section class="panel">
-      <h2>3) Salida</h2>
+      <h2 style="margin:0 0 8px 0">3) Salida (formato exacto)</h2>
       <pre id="out" class="mono"></pre>
       <div class="row" style="margin-top:8px">
-        <button class="btn good" onclick="copyOut()">Copiar</button>
+        <button onclick="copyOut()">Copiar</button>
       </div>
     </section>
 
     <!-- LOG -->
     <section class="panel">
-      <h2>Log</h2>
+      <h2 style="margin:0 0 8px 0">Log</h2>
       <pre id="log" class="mono"></pre>
     </section>
 
-    <!-- DIAGNÓSTICO DETALLADO -->
+    <!-- DIAGNÓSTICO -->
     <section class="panel">
-      <h2>Diagnóstico</h2>
+      <h2 style="margin:0 0 8px 0">Diagnóstico</h2>
       <pre id="diag" class="mono"></pre>
     </section>
   </main>
 
-  <script>
-  // =================== Estado/UI ===================
-  const S = {
-    proxyBase: localStorage.getItem('proxyBase')||'',
-    lastProxy: localStorage.getItem('activeProxy')||''
-  };
-  const $ = s => document.querySelector(s);
+<script>
+const S = {
+  apiKey: localStorage.getItem('apif_key') || ''
+};
+const $ = s => document.querySelector(s);
 
-  function saveProxy(){
-    // Si quieres 100% repo, deja vacío este campo (recomendado)
-    S.proxyBase=$('#proxyBase').value.trim().replace(/\/$/,'');
-    localStorage.setItem('proxyBase',S.proxyBase);
-    updateProxyStatus();
+function saveKey(){
+  S.apiKey = $('#apiKey').value.trim();
+  localStorage.setItem('apif_key', S.apiKey);
+  $('#keyStatus').textContent = S.apiKey ? 'API Key guardada' : 'API Key vacía';
+}
+(function init(){
+  $('#apiKey').value = S.apiKey;
+  $('#keyStatus').textContent = S.apiKey ? 'API Key guardada' : 'API Key vacía';
+})();
+
+function log(m){ const el=$('#log'); el.textContent += (el.textContent?'\n':'') + m; }
+function diag(m){ const el=$('#diag'); el.textContent += (el.textContent?'\n':'') + `[${new Date().toLocaleTimeString()}] ${m}`; }
+function setStatus(m){ $('#status').textContent = m; }
+function clearAll(){ $('#out').textContent=''; $('#log').textContent=''; $('#diag').textContent=''; setStatus(''); progressHide(); }
+function copyOut(){ const t=$('#out').textContent; if(!t){alert('No hay salida');return;} navigator.clipboard.writeText(t).then(()=>alert('Copiado')); }
+function progressShow(){ $('#progress').style.display='flex'; }
+function progressHide(){ $('#progress').style.display='none'; }
+function progress(p,msg){ progressShow(); $('#pfill').style.width=Math.max(0,Math.min(100,p))+'%'; $('#ptext').textContent=(Math.round(p))+'%'; if(msg) setStatus(msg); }
+
+const BASE = 'https://api-football-v1.p.rapidapi.com/v3';
+
+// ------- helpers API-Football -------
+async function afetch(path, params = {}) {
+  if (!S.apiKey) throw new Error('Falta API Key (RapidAPI)');
+  const url = new URL(BASE + path);
+  for (const [k,v] of Object.entries(params)) if (v!==undefined && v!==null && v!=='') url.searchParams.set(k, v);
+  const r = await fetch(url.toString(), {
+    headers: {
+      'x-rapidapi-host': 'api-football-v1.p.rapidapi.com',
+      'x-rapidapi-key': S.apiKey
+    }
+  });
+  const txt = await r.text();
+  let json = null;
+  try { json = JSON.parse(txt); } catch {
+    throw new Error('Respuesta no-JSON de API-Football: '+txt.slice(0,160));
   }
-  function updateProxyStatus(){
-    $('#proxyStatus').textContent = S.proxyBase
-      ? `Usando tu proxy: ${S.proxyBase}`
-      : 'Modo 100% repo: r.jina.ai + proxys públicos';
+  if (!r.ok) {
+    const msg = json?.message || json?.errors || ('HTTP '+r.status);
+    throw new Error('API-Football error: '+JSON.stringify(msg));
   }
-  (function init(){ $('#proxyBase').value=S.proxyBase; updateProxyStatus(); })();
+  return json;
+}
 
-  function log(m){ const el=$('#log'); el.textContent += (el.textContent?'\n':'')+m; }
-  function diag(line){ const row=`[${new Date().toLocaleTimeString()}] ${line}`; const el=$('#diag'); el.textContent += (el.textContent?'\n':'')+row; }
-  function setStatus(m){ $('#status').textContent=m; }
-  function clearAll(){ $('#out').textContent=''; $('#log').textContent=''; $('#diag').textContent=''; setStatus(''); progressHide(); }
-  function copyOut(){ const t=$('#out').textContent; if(!t){alert('No hay salida');return;} navigator.clipboard.writeText(t).then(()=>alert('Copiado')); }
+// Busca equipo por nombre → id
+async function findTeamByName(name){
+  const j = await afetch('/teams', { search: name });
+  const list = j?.response || [];
+  if (!list.length) throw new Error('No se encontró equipo: '+name);
+  const hit = list[0];
+  return { id: hit.team.id, name: hit.team.name, country: hit.team.country };
+}
 
-  function progressShow(){ $('#progress').style.display='flex'; }
-  function progressHide(){ $('#progress').style.display='none'; }
-  function progress(p,msg){ progressShow(); $('#pfill').style.width=Math.max(0,Math.min(100,p))+'%'; $('#ptext').textContent=Math.round(p)+'%'; if(msg) setStatus(msg); }
+// Últimos N partidos del equipo
+async function lastMatches(teamId, n){
+  const j = await afetch('/fixtures', { team: teamId, last: n });
+  return j?.response || [];
+}
 
-  // =================== Proxys (prioridad Jina en modo repo) ===================
-  function hasProxyBase(){ return !!S.proxyBase; }
+// Eventos de un fixture
+async function fixtureEvents(fixtureId){
+  const j = await afetch('/fixtures/events', { fixture: fixtureId });
+  return j?.response || [];
+}
 
-  const PROXIES = [
-    // Si configuraste un backend propio (Render/Worker), lo probamos primero:
-    { name:'Worker',    kind:'worker', active:()=>hasProxyBase(), build:(path)=> `${S.proxyBase.replace(/\/$/,'')}/sofa?path=${encodeURIComponent(path)}` },
+// Estadísticas de un fixture
+async function fixtureStats(fixtureId){
+  const j = await afetch('/fixtures/statistics', { fixture: fixtureId });
+  const teams = j?.response || [];
+  const out = { possessionHome:null, possessionAway:null, shotsHome:null, shotsAway:null, xgHome:null, xgAway:null };
+  if (teams.length >= 2) {
+    const A = teams[0].statistics || [];
+    const B = teams[1].statistics || [];
+    const find = (arr, key) => (arr.find(x => (x.type||'').toLowerCase().includes(key)) || {}).value;
+    const n = v => {
+      if (v==null) return null;
+      if (typeof v === 'number') return v;
+      const s = (''+v).trim();
+      if (s.endsWith('%')) return parseFloat(s);
+      const f = parseFloat(s.replace(',','.'));
+      return isNaN(f) ? null : f;
+    };
+    out.possessionHome = n(find(A,'possession'));
+    out.possessionAway = n(find(B,'possession'));
+    const shA = n(find(A,'shots on goal')) ?? n(find(A,'shots on target'));
+    const stA = n(find(A,'total shots')) ?? n(find(A,'shots total')) ?? n(find(A,'shots'));
+    const shB = n(find(B,'shots on goal')) ?? n(find(B,'shots on target'));
+    const stB = n(find(B,'total shots')) ?? n(find(B,'shots total')) ?? n(find(B,'shots'));
+    out.shotsHome = (stA!=null||shA!=null) ? { total: stA, onTarget: shA } : null;
+    out.shotsAway = (stB!=null||shB!=null) ? { total: stB, onTarget: shB } : null;
+    out.xgHome = n(find(A,'xg')) ?? null;
+    out.xgAway = n(find(B,'xg')) ?? null;
+  }
+  return out;
+}
 
-    // Públicos (ordenado por estabilidad):
-    { name:'Jina',      kind:'public', active:()=>true, build:(path)=> `https://r.jina.ai/http://api.sofascore.com${path}` },
-    { name:'AllOrigins',kind:'public', active:()=>true, build:(path)=> `https://api.allorigins.win/raw?url=${encodeURIComponent('https://api.sofascore.com'+path)}` },
-    { name:'Thingproxy',kind:'public', active:()=>true, build:(path)=> `https://thingproxy.freeboard.io/fetch/https://api.sofascore.com${path}` },
-    { name:'iso-git',   kind:'public', active:()=>true, build:(path)=> `https://cors.isomorphic-git.org/https://api.sofascore.com${path}` },
-    { name:'corsproxy', kind:'public', active:()=>true, build:(path)=> `https://corsproxy.io/?${encodeURIComponent('https://api.sofascore.com'+path)}` },
-  ];
+// Formateo de eventos
+function formatEvents(events, homeName, awayName){
+  const lines = [];
+  const sort = [...events].sort((a,b)=>{
+    const ma = (a.time?.elapsed||0) + (a.time?.extra||0)/100;
+    const mb = (b.time?.elapsed||0) + (b.time?.extra||0)/100;
+    return ma - mb;
+  });
+  for(const e of sort){
+    const min = e.time?.extra ? `${e.time.elapsed}+${e.time.extra}` : (e.time?.elapsed ?? '?');
+    const team = e.team?.name || '';
+    const player = e.player?.name ? ` - ${e.player.name}` : '';
+    const asst = e.assist?.name ? ` (Asistencia: ${e.assist.name})` : '';
+    let tipo = e.type || '';
+    if (tipo==='Goal') tipo = 'Gol';
+    else if (tipo==='Card' && /yellow/i.test(e.detail||'')) tipo = 'Tarjeta Amarilla';
+    else if (tipo==='Card' && /red/i.test(e.detail||'')) tipo = 'Tarjeta Roja';
+    else if (tipo==='subst' || /substitution/i.test(tipo)) tipo = 'Cambio';
+    else if (/var/i.test(tipo)) tipo = 'VAR';
+    const det = e.detail ? (tipo==='Gol' ? ` ${e.detail.includes('Own Goal')?'(Auto)':''}${e.detail.includes('Penalty')?' (Penalti)':''}` : ` (${e.detail})`) : '';
+    lines.push(`[${min}'] ${tipo}${det} - ${team}${player}${asst}`);
+  }
+  return lines;
+}
 
-  const HEALTH = {}; // { name: { fails:number, cooldownUntil:ts } }
-  function isOnCooldown(name){ const h=HEALTH[name]; return h && h.cooldownUntil && Date.now()<h.cooldownUntil; }
-  function markSuccess(name){ HEALTH[name]={fails:0,cooldownUntil:0}; S.lastProxy=name; localStorage.setItem('activeProxy',name); updateProxyStatus(); }
-  function markFail(name){ const h=HEALTH[name]||{fails:0,cooldownUntil:0}; h.fails++; const mins=Math.min(h.fails,5); h.cooldownUntil=Date.now()+mins*60*1000; HEALTH[name]=h; }
+function formatBlock(fx, eventsText, stats){
+  const date = fx.fixture?.date ? new Date(fx.fixture.date).toISOString().slice(0,10) : '-';
+  const comp = fx.league?.name || '-';
+  const home = fx.teams?.home?.name || 'Local';
+  const away = fx.teams?.away?.name || 'Visitante';
+  const hs = fx.goals?.home ?? fx.score?.fulltime?.home ?? '-';
+  const as = fx.goals?.away ?? fx.score?.fulltime?.away ?? '-';
 
-  function buildTargets(path){
-    // Orden: si hay Worker → primero; luego último OK; luego el resto
-    const baseOrder = PROXIES.filter(p=>p.active()).map(p=>p.name);
-    const order=[];
-    if(hasProxyBase()) order.push('Worker');
-    if(S.lastProxy && S.lastProxy!=='Worker') order.push(S.lastProxy);
-    for(const n of baseOrder) if(!order.includes(n)) order.push(n);
-    return order
-      .filter(n=>!isOnCooldown(n))
-      .map(n=> PROXIES.find(p=>p.name===n))
-      .map(p=>({name:p.name,kind:p.kind,url:p.build(path)}));
+  const parts = [];
+  parts.push(`Fecha: ${date}`);
+  parts.push(`Competición: ${comp}`);
+  parts.push(`Equipos: ${home} vs ${away}`);
+  parts.push(`Resultado Final: ${hs}-${as}`);
+
+  if (stats.shotsHome || stats.shotsAway) {
+    const shA = stats.shotsHome ? `${home} ${stats.shotsHome.total ?? '-'}${stats.shotsHome.onTarget!=null?` (${stats.shotsHome.onTarget} al arco)`:''}` : '';
+    const shB = stats.shotsAway ? `${away} ${stats.shotsAway.total ?? '-'}${stats.shotsAway.onTarget!=null?` (${stats.shotsAway.onTarget} al arco)`:''}` : '';
+    parts.push(`Tiros Totales: ${shA}${shA&&shB?`, `:''}${shB}`);
+  }
+  if (stats.possessionHome!=null && stats.possessionAway!=null) {
+    parts.push(`Posesión: ${home} ${stats.possessionHome}% , ${away} ${stats.possessionAway}%`);
+  }
+  if (stats.xgHome!=null && stats.xgAway!=null) {
+    parts.push(`xG: ${home} ${stats.xgHome} , ${away} ${stats.xgAway}`);
   }
 
-  async function fetchWithTimeout(url, ms=10000){
-    const ctrl=new AbortController(); const id=setTimeout(()=>ctrl.abort('timeout'),ms);
-    try{
-      const t0=performance.now();
-      const r=await fetch(url,{signal:ctrl.signal});
-      const t1=performance.now();
-      return { response:r, ms:Math.round(t1-t0), aborted:false };
-    }catch(e){ return { response:null, ms:ms, aborted:true, error:e }; }
-    finally{ clearTimeout(id); }
-  }
+  parts.push(`\nEventos:`);
+  parts.push(...eventsText);
+  return parts.join('\n');
+}
 
-  function explainError({status,aborted,error,peek}){
-    if(aborted) return 'Timeout (demoró demasiado)';
-    if(!status && error) return 'Error de red/CORS del proxy';
-    if(status===403) return 'HTTP 403 (bloqueo anti-bot/proxy)';
-    if(status===404) return 'HTTP 404 (ruta no encontrada)';
-    if(status>=500)  return 'HTTP 5xx (proxy caído)';
-    if(peek && /<html|challenge|captcha|page not found/i.test(peek)) return 'Respuesta HTML/challenge';
-    return `HTTP ${status||'desconocido'}`;
-  }
+// ====== Flujo principal ======
+async function runAll(){
+  try{
+    clearAll();
+    const Aname = $('#equipoA').value.trim();
+    const Bname = $('#equipoB').value.trim();
+    if(!Aname || !Bname){ alert('Escribe Equipo A y Equipo B'); return; }
+    if(!S.apiKey){ alert('Pega tu API Key primero'); return; }
 
-  // ===== fetchJSON con ROTACIÓN REAL (solo acepta JSON válido) =====
-  async function fetchJSON(path){
-    const targets=buildTargets(path);
-    let last=null;
+    progress(5,'Buscando equipos…');
+    const A = await findTeamByName(Aname); log(`Equipo A: ${A.name} (#${A.id})`);
+    const B = await findTeamByName(Bname); log(`Equipo B: ${B.name} (#${B.id})`);
+    let pct=10;
+    const nA=+($('#nA').value||0), nB=+($('#nB').value||0), nH2H=+($('#nH2H').value||0);
+    const total=(nA>0?nA:0)+(nB>0?nB:0)+(nH2H>0?nH2H:0);
+    const step = total? Math.max(85/total,3) : 10;
 
-    for(let i=0;i<targets.length;i++){
-      const t=targets[i];
-      diag(`Intento ${i+1}/${targets.length} → ${t.name}`);
-      const {response,ms,aborted,error}=await fetchWithTimeout(t.url, 10000);
+    const blocks=[];
 
-      if(!response){
-        last={proxy:t.name,status:0,aborted,error};
-        markFail(t.name);
-        diag(`❌ ${t.name} sin respuesta · ${explainError(last)} (${ms} ms)`);
-        continue;
-      }
-
-      const ct=(response.headers.get('content-type')||'').toLowerCase();
-      const text=await response.text();
-      const peek=text.slice(0,180);
-
-      if(!response.ok){
-        last={proxy:t.name,status:response.status,aborted:false,peek};
-        markFail(t.name);
-        diag(`❌ ${t.name} HTTP ${response.status} (${ms} ms)`);
-        continue;
-      }
-
-      // Aceptamos solo JSON válido (algunos proxys devuelven text/plain o HTML)
-      try{
-        const clean=text.replace(/^\uFEFF/,'').trim();
-        const json=JSON.parse(clean);
-        markSuccess(t.name);
-        diag(`✅ ${t.name} OK (${ms} ms)`);
-        return json;
-      }catch{
-        last={proxy:t.name,status:200,aborted:false,peek};
-        markFail(t.name);
-        diag(`❌ ${t.name} devolvió no-JSON (HTML/challenge). Rotando…`);
-        continue;
-      }
+    async function processFx(fx){
+      const [evs, stats] = await Promise.all([
+        fixtureEvents(fx.fixture.id),
+        fixtureStats(fx.fixture.id).catch(()=>({}))
+      ]);
+      const lines = formatEvents(evs, fx.teams?.home?.name, fx.teams?.away?.name);
+      blocks.push( formatBlock(fx, lines, stats||{}) );
+      pct+=step; progress(Math.min(98,pct),'Procesando…');
     }
 
-    const human = last? `${last.proxy}: ${explainError(last)}` : 'sin intentos válidos';
-    const err = new Error(`No hay proxy disponible · Último fallo → ${human}`);
-    err.detail=last; throw err;
-  }
-
-  async function connectivityTest(){
-    try{
-      const j=await fetchJSON(`/api/v1/search/all?q=barcelona`);
-      const ok=!!(j?.teams?.data);
-      diag(ok? 'Conectividad OK (search/all)':'Conectividad rara (estructura)');
-      return ok;
-    }catch(e){
-      diag('Conectividad falló: '+(e.message||e));
-      throw e;
+    if(nA>0){
+      setStatus(`Descargando últimos ${nA} de ${A.name}…`);
+      const list = await lastMatches(A.id, nA);
+      for(const fx of list) await processFx(fx);
     }
-  }
-
-  // =================== Lógica de negocio ===================
-  async function searchTeamByName(name){
-    const tries = Array.from(new Set([
-      name,
-      name.replace(/\s+/g,' ').trim(),
-      name.replace(/^fc\s+/i,'FC '),
-      name.replace(/\s+cf$/i,' CF')
-    ])).filter(Boolean);
-
-    let lastErr=null;
-    for(const q of tries){
-      try{
-        const j=await fetchJSON(`/api/v1/search/all?q=${encodeURIComponent(q)}`);
-        const teams=(j?.teams?.data)||[]; if(!teams.length){ lastErr=new Error('Sin coincidencias'); continue; }
-        const n=q.toLowerCase();
-        const hit = teams.find(t=> (t.name||'').toLowerCase().includes(n) || (t.shortName||'').toLowerCase().includes(n)) || teams[0];
-        if(hit) return {id:hit.id,name:hit.name,slug:hit.slug};
-      }catch(e){ lastErr=e; }
+    if(nB>0){
+      setStatus(`Descargando últimos ${nB} de ${B.name}…`);
+      const list = await lastMatches(B.id, nB);
+      for(const fx of list) await processFx(fx);
     }
-    throw new Error(`No se encontró equipo: ${name}${lastErr?` (${lastErr.message})`:''}`);
-  }
-
-  async function getLastEvents(teamId,count){
-    const want=Math.max(count||0,0); const batch=Math.max(want,25);
-    const j=await fetchJSON(`/api/v1/team/${teamId}/events/last/${batch}`);
-    return (j?.events||[]).slice(0,want);
-  }
-
-  async function getIncidents(eventId){
-    const j=await fetchJSON(`/api/v1/event/${eventId}/incidents`);
-    return (j?.incidents)||[];
-  }
-
-  async function getStatistics(eventId){
-    const eps=[
-      `/api/v1/event/${eventId}/statistics`,
-      `/api/v1/event/${eventId}/statistics/overall`,
-      `/api/v1/event/${eventId}/statistics?type=total`
-    ];
-    for(const ep of eps){
-      try{
-        const j=await fetchJSON(ep);
-        const stats = j?.statistics || j?.groups || j?.data || j || null;
-        if(!stats) continue;
-        return parseStatistics(stats);
-      }catch(e){ diag(`stats fallo (${ep}): ${e.message||e}`); }
-    }
-    return { possessionHome:null, possessionAway:null, shotsHome:null, shotsAway:null, xgHome:null, xgAway:null };
-  }
-
-  function parseStatistics(stats){
-    let possessionHome=null, possessionAway=null, shotsHome=null, shotsAway=null, xgHome=null, xgAway=null;
-    const flat=[]; const push=(n,h,a)=>flat.push({name:(n||'').toString().toLowerCase(),home:h,away:a});
-
-    if(Array.isArray(stats)){
-      for(const g of stats){
-        if(g?.statisticsItems){ for(const it of g.statisticsItems) push(it.name,it.home,it.away); }
-        else if(g?.items){ for(const it of g.items) push(it.name,it.home,it.away); }
-        else if(g?.name && (g?.home!=null||g?.away!=null)) push(g.name,g.home,g.away);
-      }
-    } else if(typeof stats==='object'){
-      for(const k of Object.keys(stats)){ const arr=stats[k]; if(Array.isArray(arr)) for(const it of arr) push(it.name,it.home,it.away); }
+    if(nH2H>0){
+      // H2H: pedimos un rango y filtramos
+      setStatus(`Buscando H2H ${A.name} vs ${B.name}…`);
+      const listA = await lastMatches(A.id, Math.max(nH2H*8, 40));
+      const vsB = listA.filter(fx => fx.teams?.home?.id===B.id || fx.teams?.away?.id===B.id).slice(0, nH2H);
+      for(const fx of vsB) await processFx(fx);
     }
 
-    const num=v=>{ if(v==null) return null; if(typeof v==='number') return v; const s=String(v).trim(); if(s.endsWith('%')) return parseFloat(s); const n=parseFloat(s.replace(',','.')); return isNaN(n)?null:n; };
-    const pick=names=>flat.find(x=>names.some(nm=>x.name.includes(nm)))||null;
+    if(blocks.length===0){ alert('Sin resultados con esos parámetros'); setStatus('Sin resultados'); progressHide(); return; }
 
-    const poss=pick(['possession','posesión','ball possession']); if(poss){ possessionHome=num(poss.home); possessionAway=num(poss.away); }
-    const shots=pick(['total shots','shots total','tiros totales','shots']); if(shots){ shotsHome={total:num(shots.home),onTarget:null}; shotsAway={total:num(shots.away),onTarget:null}; }
-    const sot=pick(['shots on target','on target','tiros a puerta','tiros al arco']); if(sot){ shotsHome=shotsHome||{total:null,onTarget:null}; shotsAway=shotsAway||{total:null,onTarget:null}; shotsHome.onTarget=num(sot.home); shotsAway.onTarget=num(sot.away); }
-    const xg=pick(['xg','expected goals']); if(xg){ xgHome=num(xg.home); xgAway=num(xg.away); }
+    const header = `Contexto:
+Equipo A: ${A.name} | Equipo B: ${B.name} | #A: ${$('#nA').value||'0'} | #B: ${$('#nB').value||'0'} | H2H: ${$('#nH2H').value||'0'} | Competición: ${$('#competicionGlobal').value||'-'}
 
-    return { possessionHome, possessionAway, shotsHome, shotsAway, xgHome, xgAway };
+`;
+    $('#out').textContent = header + blocks.join('\n\n');
+    setStatus('Listo ✅'); progress(100,'Completado'); setTimeout(progressHide,800);
+  }catch(err){
+    log('ERROR: '+(err.message||err));
+    setStatus('Error'); progressHide(); alert(err.message||err);
   }
-
-  function normalizeIncident(ev){
-    const type=ev.incidentType||ev.type||'';
-    const min=ev.time??ev.minute??null;
-    const at=ev.addedTime||ev.extraTime||null;
-    const player=ev.player?.name||ev.playerName||'';
-    const assist=ev.assist1?.name||ev.assist?.name||'';
-    const team=!!ev.isHome;
-    let detail=type;
-    if(type==='goal'){ detail='Gol'; if(ev.isOwnGoal) detail+=' (Auto)'; if(ev.isPenalty) detail+=' (Penalti)'; if(ev.isMissedPenalty) detail='Penalti fallado'; }
-    else if(type==='yellowCard') detail='Tarjeta Amarilla';
-    else if(type==='redCard') detail='Tarjeta Roja';
-    else if(type==='yellowRed') detail='Doble amarilla (roja)';
-    else if(type==='substitution') detail='Cambio';
-    else if(type==='var') detail='VAR';
-    else if(type==='period') detail=ev.text||'Periodo';
-    return {min,at,player,assist,team,detail};
-  }
-
-  function formatIncidents(incs,home,away){
-    return incs.map(normalizeIncident).filter(x=>x.min!=null)
-      .sort((a,b)=> (a.min + (a.at||0)/100) - (b.min + (b.at||0)/100))
-      .map(ev=>`[${ev.at?ev.min+"+"+ev.at:ev.min}'] ${ev.detail} - ${ev.team?home:away}${ev.player?` - ${ev.player}`:''}${ev.assist?` (Asistencia: ${ev.assist})`:''}`);
-  }
-
-  function formatMatch(ev,inc,stats){
-    const h=ev.homeTeam?.name||'Local';
-    const a=ev.awayTeam?.name||'Visitante';
-    const parts=[];
-    parts.push(`Fecha: ${ev.startTimestamp?new Date(ev.startTimestamp*1000).toISOString().slice(0,10):'-'}`);
-    parts.push(`Competición: ${ev.tournament?.name||'-'}`);
-    parts.push(`Equipos: ${h} vs ${a}`);
-    parts.push(`Resultado Final: ${ev.homeScore?.current??'-'}-${ev.awayScore?.current??'-'}`);
-    if(stats.shotsHome||stats.shotsAway) parts.push(`Tiros Totales: ${h} ${stats.shotsHome?.total??'-'}${stats.shotsHome?.onTarget!=null?` (${stats.shotsHome.onTarget} al arco)`:''}, ${a} ${stats.shotsAway?.total??'-'}${stats.shotsAway?.onTarget!=null?` (${stats.shotsAway.onTarget} al arco)`:''}`);
-    if(stats.possessionHome!=null&&stats.possessionAway!=null) parts.push(`Posesión: ${h} ${stats.possessionHome}% , ${a} ${stats.possessionAway}%`);
-    if(stats.xgHome!=null&&stats.xgAway!=null) parts.push(`xG: ${h} ${stats.xgHome} , ${a} ${stats.xgAway}`);
-    parts.push("\nEventos:");
-    parts.push(...inc);
-    return parts.join('\n');
-  }
-
-  // =================== Flujo principal ===================
-  async function connectivityTest(){
-    const ok = await fetchJSON(`/api/v1/search/all?q=barcelona`).then(j=>!!(j?.teams?.data));
-    if(ok) diag('Conectividad OK (search/all)'); else diag('Conectividad rara (estructura)');
-    return ok;
-  }
-
-  async function runAll(){
-    try{
-      clearAll();
-      const Aname=$('#equipoA').value.trim();
-      const Bname=$('#equipoB').value.trim();
-      if(!Aname||!Bname){ alert('Escribe Equipo A y Equipo B'); return; }
-
-      progress(3,'Probando conectividad…');
-      await connectivityTest();
-
-      progress(10,'Buscando equipos…');
-      const A=await searchTeamByName(Aname); log(`Equipo A: ${A.name}`);
-      const B=await searchTeamByName(Bname); log(`Equipo B: ${B.name}`);
-
-      const nA=+($('#nA').value||0), nB=+($('#nB').value||0), nH2H=+($('#nH2H').value||0);
-      const total=(nA>0?nA:0)+(nB>0?nB:0)+(nH2H>0?nH2H:0);
-      const step = total? Math.max(65/total,2) : 10; let pct=30;
-
-      const blocks=[];
-      async function process(ev){
-        const [inc,stats]=await Promise.all([ getIncidents(ev.id), getStatistics(ev.id) ]);
-        blocks.push( formatMatch(ev, formatIncidents(inc, ev.homeTeam?.name, ev.awayTeam?.name), stats) );
-        pct+=step; progress(Math.min(98,pct),'Procesando…');
-      }
-
-      if(nA>0){ setStatus(`Descargando últimos ${nA} de ${A.name}…`); const list=await getLastEvents(A.id,nA); for(const ev of list) await process(ev); }
-      if(nB>0){ setStatus(`Descargando últimos ${nB} de ${B.name}…`); const list=await getLastEvents(B.id,nB); for(const ev of list) await process(ev); }
-      if(nH2H>0){ setStatus(`Buscando H2H ${A.name} vs ${B.name}…`); const cand=await getLastEvents(A.id,Math.max(100,nH2H)); const vsB=cand.filter(e=>e.homeTeam?.id===B.id||e.awayTeam?.id===B.id).slice(0,nH2H); for(const ev of vsB) await process(ev); }
-
-      if(!blocks.length){ alert('Sin resultados con esos parámetros'); setStatus('Sin resultados'); progressHide(); return; }
-      $('#out').textContent = `Contexto:\nEquipo A: ${A.name} | Equipo B: ${B.name} | #A: ${$('#nA').value||'0'} | #B: ${$('#nB').value||'0'} | H2H: ${$('#nH2H').value||'0'} | Competición: ${$('#competicionGlobal').value||'-'}\n\n` + blocks.join('\n\n');
-      setStatus('Listo ✅'); progress(100,'Completado'); setTimeout(progressHide,800);
-    }catch(e){
-      log('ERROR: '+(e.message||e));
-      if(e.detail){ diag(`Último proxy: ${e.detail.proxy} · ${e.detail.status||'sin status'} · ${e.detail.aborted?'timeout':'red'}`); }
-      if(e.bodySnippet){ diag('Snippet respuesta no-JSON: '+e.bodySnippet); }
-      setStatus('Error'); progressHide(); alert(e.message||e);
-    }
-  }
-  </script>
+}
+</script>
 </body>
 </html>
